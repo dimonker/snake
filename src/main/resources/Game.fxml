@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Group?>
+<?import javafx.scene.Scene?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.stage.Stage?>
+
+<Stage fx:id="theStage" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.app.controllers.GameController">
+    <scene>
+        <Scene fx:id="theScene">
+            <AnchorPane prefHeight="435.0" prefWidth="586.0">
+            <children>
+               <Group fx:id="root" />
+            </children></AnchorPane>
+        </Scene>
+    </scene>
+</Stage>

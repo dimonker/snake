@@ -10,7 +10,8 @@
     <packaging>jar</packaging>
 
     <properties>
-        <jdk.version>1.8</jdk.version>
+
+        <jdk.version>8</jdk.version>
     </properties>
 
     <build>
