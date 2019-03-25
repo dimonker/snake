@@ -1,8 +1,7 @@
 package com.app.controllers;
 
-import com.app.IntValue;
-import com.app.LongValue;
-import com.app.Sprite;
+import com.app.*;
+import com.sun.xml.internal.ws.commons.xmlutil.Converter;
 import javafx.animation.AnimationTimer;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -13,18 +12,23 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ResourceBundle;
+import java.util.function.Predicate;
 
 public class GameController{
+    Game game = new Game();
+
+
     @FXML
     Stage theStage;
 
@@ -35,7 +39,77 @@ public class GameController{
     Group root;
 
     public void initialize(){
-        theStage.setTitle( "Collect the Money Bags!" );
+        theStage.setTitle("SnakeGame");
+        Canvas canvas = new Canvas(1000, 800);
+        root.getChildren().add(canvas);
+
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+
+
+        Snake snake = new Snake();
+        theScene.setOnKeyPressed(e -> {
+            switch (e.getCode().toString()){
+                case "UP":
+                    snake.setNextDirection(Direction.UP);
+                    break;
+                case "DOWN":
+                    snake.setNextDirection(Direction.DOWN);
+                    break;
+                case "LEFT":
+                    snake.setNextDirection(Direction.LEFT);
+                    break;
+                case "RIGHT":
+                    snake.setNextDirection(Direction.RIGHT);
+                    break;
+            }
+        });
+
+        snake.setX(5);
+        snake.setY(5);
+
+        LongValue lastNanoTime = new LongValue(System.nanoTime());
+        new AnimationTimer(){
+            @Override
+            public void handle(long now) {
+                //1000000000
+                if (now - lastNanoTime.value < 100000000){
+                    return;
+                }
+                lastNanoTime.value = now;
+
+                int size = Game.CELL_SIZE;
+                Predicate<Integer> predicate1 = (x) -> x % 2 == 0;
+                Predicate<Integer> predicate2 = (x) -> x % 2 == 1;
+
+                Predicate<Integer> currPredicate = predicate1;
+                for (int i = 0; i < 20; i++){
+                    for (int j = 0; j < 16; j++){
+                        if (currPredicate.test(j))
+                            gc.setFill(new Color(0.6,1,0,1));
+                        else
+                            gc.setFill(new Color(0,1,0,1));
+
+                        gc.fillRect(i * size, j * size, size, size);
+                    }
+
+                    if (i % 2 == 1)
+                        currPredicate = predicate1;
+                    else
+                        currPredicate = predicate2;
+
+                }
+
+                snake.update();
+
+                gc.setFill(new Color(0,0,0,1));
+                gc.fillRect(snake.getX() * size, snake.getY() * size, size, size);
+
+
+            }
+        }.start();
+
+        theStage.show();
+        /*theStage.setTitle( "Collect the Money Bags!" );
         Canvas canvas = new Canvas( 512, 512 );
         root.getChildren().add( canvas );
 
@@ -131,7 +205,7 @@ public class GameController{
             }
         }.start();
 
-        theStage.show();
+        theStage.show();*/
     }
 
 
