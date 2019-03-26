@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Scene?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.stage.Stage?>
+
+<Stage fx:id="stage" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.app.controllers.TableOfRecordsController">
+    <scene>
+        <Scene>
+            <AnchorPane prefHeight="327.0" prefWidth="501.0" style="-fx-background-color: #aad751;">
+            <children>
+               <TableView fx:id="table" layoutX="14.0" layoutY="14.0" prefHeight="329.0" prefWidth="482.0" style="-fx-background-color: #a2d149;">
+                 <columns>
+                     <TableColumn fx:id="positionColumn" prefWidth="75.20001411437988" text="Позиция" />
+                   <TableColumn fx:id="scoreColumn" prefWidth="71.20000457763672" text="Счёт" />
+                   <TableColumn fx:id="dateColumn" minWidth="0.0" prefWidth="334.39996337890625" text="Дата" />
+                 </columns>
+               </TableView>
+            </children></AnchorPane>
+        </Scene>
+    </scene>
+</Stage>

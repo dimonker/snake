@@ -6,18 +6,10 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class Game {
     public final static int CELL_SIZE = 50;
@@ -26,17 +18,28 @@ public class Game {
 
     private ArrayList<Point> walls = new ArrayList<>();
     private Long lastNanoTime = System.nanoTime();
+    private GraphicsContext gc;
     private AnimationTimer animationTimer;
     private Snake snake = new Snake();
     private Image appleImg = new Image(getClass().getClassLoader().getResource("apple.png").toExternalForm());
-    private Point appleCoordinates = new Point(5, 5);
+    private Point appleCoordinates;
     private GameController gameController;
     private int currentScope;
-    private int bestScope;
+    private boolean over = false;
+    private int level;
 
-    public Game(GameController gameController){
+    public Game(GameController gameController, GraphicsContext gc, int level){
         this.gameController = gameController;
+        this.gc = gc;
+        this.level = level;
         walls.add(new Point(0,0));
+        walls.add(new Point(WIDTH - 1, 0));
+        walls.add(new Point(0, HEIGHT / 2));
+        walls.add(new Point(0, HEIGHT - 1));
+        walls.add(new Point(WIDTH - 1, HEIGHT / 2));
+        walls.add(new Point(WIDTH - 1, HEIGHT - 1));
+        spawnApple();
+        spawnWalls();
     }
 
 
@@ -57,47 +60,27 @@ public class Game {
         }
     }
 
-    public void initAnimationTimer(GraphicsContext gc) {
+    private void initAnimationTimer() {
         animationTimer = new AnimationTimer(){
             @Override
             public void handle(long now) {
-                //1000000000
                 //update every 100 ms
                 if (now - lastNanoTime < 100000000){
                     return;
                 }
                 lastNanoTime = now;
 
-                int size = Game.CELL_SIZE;
-                Predicate<Integer> predicate1 = (x) -> x % 2 == 0;
-                Predicate<Integer> predicate2 = (x) -> x % 2 == 1;
-
-                Predicate<Integer> currPredicate = predicate1;
-                for (int i = 0; i < WIDTH; i++){
-                    for (int j = 0; j < HEIGHT; j++){
-                        if (currPredicate.test(j))
-                            gc.setFill(Color.web("#aad751"));
-                        else
-                            gc.setFill(Color.web("#a2d149"));
-
-                        gc.fillRect(i * size, j * size, size, size);
-                    }
-
-                    if (i % 2 == 1)
-                        currPredicate = predicate1;
-                    else
-                        currPredicate = predicate2;
-
-                }
-
                 Point p = snake.nextCoordinate();
                 if(checkCollision(p)){
                     snake.setCrashed(true);
+                    over = true;
+                    saveResult();
                     this.stop();
                 }
                 else
                     snake.update();
 
+                renderMap(gc);
                 renderApple(gc);
                 renderWalls(gc);
                 snake.render(gc);
@@ -105,21 +88,21 @@ public class Game {
         };
     }
 
-    private boolean checkCollision(Point p){
+    private boolean checkCollision(Point nextHeadCoordinate){
         ArrayList<Point> snakeCoordinates = snake.getBodyCoordinates();
-        if (snakeCoordinates.contains(p))
+        if (snakeCoordinates.contains(nextHeadCoordinate))
             return true;
 
-        if (walls.contains(p)){
+        if (walls.contains(nextHeadCoordinate)){
             return true;
         }
         
         for (Point wall : walls){
-            if (p.equals(wall))
+            if (nextHeadCoordinate.equals(wall))
                 return true;
         }
 
-        if (p.equals(appleCoordinates)){
+        if (nextHeadCoordinate.equals(appleCoordinates)){
             snake.eatApple();
             gameController.setCurrentScope(++currentScope);
             spawnApple();
@@ -140,8 +123,48 @@ public class Game {
             appleCoordinates = p;
     }
 
-    private void renderApple(GraphicsContext gc){
+    private void spawnWalls(){
+        double coeff = 0;
+        if (level == 0)
+            coeff = 0.5;
+        else if (level == 1)
+            coeff = 1;
+        else if (level == 2)
+            coeff = 2;
+        int needWalls = (int) (coeff * Math.sqrt(HEIGHT * WIDTH)) - 6;
+        while (needWalls > 0){
+            Point p = new Point(randomInt(0, WIDTH - 1), randomInt(0, HEIGHT - 1));
+            if (!walls.contains(p) && !appleCoordinates.equals(p) && !snake.getBodyCoordinates().contains(p)){
+                walls.add(p);
+                needWalls--;
+            }
+        }
+    }
 
+    private void renderMap(GraphicsContext gc){
+        Predicate<Integer> predicate1 = (x) -> x % 2 == 0;
+        Predicate<Integer> predicate2 = (x) -> x % 2 == 1;
+
+        Predicate<Integer> currPredicate = predicate1;
+        for (int i = 0; i < WIDTH; i++){
+            for (int j = 0; j < HEIGHT; j++){
+                if (currPredicate.test(j))
+                    gc.setFill(Color.web("#aad751"));
+                else
+                    gc.setFill(Color.web("#a2d149"));
+
+                gc.fillRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            }
+
+            if (i % 2 == 1)
+                currPredicate = predicate1;
+            else
+                currPredicate = predicate2;
+
+        }
+    }
+
+    private void renderApple(GraphicsContext gc){
         gc.drawImage(appleImg, appleCoordinates.getX() * CELL_SIZE, appleCoordinates.getY() * CELL_SIZE, CELL_SIZE, CELL_SIZE);
     }
 
@@ -152,6 +175,7 @@ public class Game {
     }
 
     public void start(){
+        initAnimationTimer();
         animationTimer.start();
     }
 
@@ -160,18 +184,9 @@ public class Game {
     }
 
     public void saveResult(){
-        ArrayList<String> records = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(getClass().getClassLoader().getResource("results.txt").toURI()))){
-            stream.forEach(x -> {
-                    records.add(x);
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        ArrayList<String> records = new RecordsStorage().getAllRecords();
 
-        for (int i = 0; i < records.size(); i++){
+        for (int i = 0; i < records.size(); i++)
             if (currentScope >= Integer.valueOf(records.get(i).split(",")[0])){
                 records.add(i, currentScope + "," + new Date());
                 if (records.size() > 10)
@@ -179,14 +194,15 @@ public class Game {
                 break;
             }
 
-        }
 
-        try {
-            Files.write(Paths.get(getClass().getClassLoader().getResource("results.txt").toURI()), records, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        new RecordsStorage().saveAllRecords(records);
+    }
+
+    public boolean isOver() {
+        return over;
+    }
+
+    public void setOver(boolean over) {
+        this.over = over;
     }
 }

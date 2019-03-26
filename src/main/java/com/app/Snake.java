@@ -76,12 +76,12 @@ public class Snake {
         else
             gc.setFill(Color.web("#4572e7"));
 
-        gc.fillRect(x * Game.CELL_SIZE, y * Game.CELL_SIZE, Game.CELL_SIZE, Game.CELL_SIZE);
+        gc.fillOval(x * Game.CELL_SIZE, y * Game.CELL_SIZE, Game.CELL_SIZE, Game.CELL_SIZE);
 
         gc.setFill(Color.web("#4572e7"));
         for (int i = 1; i < bodyCoordinates.size(); i++){
             Point p = bodyCoordinates.get(i);
-            gc.fillRect(p.getX() * Game.CELL_SIZE, p.getY() * Game.CELL_SIZE, Game.CELL_SIZE, Game.CELL_SIZE);
+            gc.fillOval(p.getX() * Game.CELL_SIZE, p.getY() * Game.CELL_SIZE, Game.CELL_SIZE, Game.CELL_SIZE);
         }
     }
 
